@@ -1,104 +1,128 @@
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
+
 import java.net.Socket;
-import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Client {
+
+    class Server { // class to store and retrive server info
+        private String type;
+        private int cores;
+        private int id;
+        private int limit;
+        private double hourlyRate;
+        private int memory;
+        private int diskSpace;
+
+        public Server(String type, int id, int limit, double hourlyRate, int cores, int memory, int diskSpace) {
+            this.type = type;
+            this.cores = cores;
+            this.id = id;
+            this.limit = limit;
+            this.hourlyRate = hourlyRate;
+            this.cores = cores;
+            this.memory = memory;
+            this.diskSpace = diskSpace;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public int getCores() {
+            return cores;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public int getLimit() {
+            return limit;
+        }
+
+        public int getMemory() {
+            return memory;
+        }
+
+        public double getHourlyRate() {
+            return hourlyRate;
+        }
+
+        public int getDiskSpace() {
+            return diskSpace;
+        }
+    }
+
     public static void main(String[] args) throws Exception {
 
-        Socket clientSocket = new Socket("127.0.0.1", 50000);
-
-        //DataInputStream datain = new DataInputStream(clientSocket.getInputStream());
-        
-        //ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        
-
+        String HELO = "HELO\n";
+        String AUTH = "AUTH 47478969\n";
+        String REDY = "REDY\n";
+        String SCHD = "SCHD\n";
+        Socket clientSocket = new Socket("127.0.0.1", 50000); // creating the socket
         String message = "";
+        DataOutputStream dataOut = new DataOutputStream(clientSocket.getOutputStream()); // dataout for writing to the
+                                                                                         // server
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); // bufferreader
+                                                                                                                  // to
+                                                                                                                  // read
+                                                                                                                  // from
+                                                                                                                  // theserver
+        Server largestServer;
+        ArrayList<Server> servers = new ArrayList<Server>();
+        dataOut.write(HELO.getBytes()); // Handshake begins
+        dataOut.flush();
+        message = bufferedReader.readLine();
+        System.out.println("The server is saying:" + message);
+        dataOut.write(AUTH.getBytes());
+        dataOut.flush();
+        message = bufferedReader.readLine();
+        System.out.println("The server is saying:" + message); // Handshake ends
 
-        // while (!message.toLowerCase().equals("bye")) {
-
-            
-
-            
-          //  System.out.println(message);
-          //  if (message.equals("G'DAY")) {
-               // dataOut.write(("BYE\n").getBytes());
-
-           // }
-            
-           String command = "";
-
-       // }
-              try{  
-                DataOutputStream dataOut = new DataOutputStream(clientSocket.getOutputStream());
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                dataOut.write(("HELO\n").getBytes());
+        while (!message.equals("NONE")) {
+            dataOut.write(REDY.getBytes()); // Alerting the server that client is REDY
+            dataOut.flush();
+            message = bufferedReader.readLine();
+            System.out.println("The server is saying: " + message);
+            if (message.equals("JOBN")) {
+                dataOut.write(("GETS All\n").getBytes());
                 dataOut.flush();
-                //dataOut.write(message.getBytes());
                 message = bufferedReader.readLine();
-               System.out.println("The server is saying:"+message);
-              // String username = "47478969";
-               dataOut.write(("AUTH 47478969\n").getBytes());
-               dataOut.flush();
-               message = bufferedReader.readLine();
-               System.out.println("The server is saying:"+message);
-               dataOut.write(("REDY\n").getBytes());
-               dataOut.flush();
-               message = bufferedReader.readLine();
-               System.out.println("The server is saying: "+message);
-               int jobID = 0;
+                System.out.println("The server is saying: " + message);
+                dataOut.write(("OK").getBytes());
+                dataOut.flush();
+                servers.add(bufferedReader.readLine()); // adding all servers to a list
 
-              
+                dataOut.write(("OK").getBytes());
+                message = bufferedReader.readLine();
+                if (message.equals(".")) {
 
-               dataOut.write(("GETS All\n").getBytes());
-               message = bufferedReader.readLine();
-               System.out.println("The server is saying: "+message);
-               dataOut.write(("OK\n").getBytes());
-               message = bufferedReader.readLine();
-               System.out.println("The server is saying: "+message);
+                }
 
-               while(jobID==500){
-                    dataOut.write(("OK\n").getBytes());
-                    message = bufferedReader.readLine();
-                    System.out.println("The server is saying: "+message);
-                    if (message.equals("."))
-                    {
-                        int Server = 0;
-                        
-                        dataOut.write(("SCHD " + jobID + "medium " + Server).getBytes());
-                        message = bufferedReader.readLine();
-                        System.out.println("The server is saying: "+message);
-                        dataOut.write(("GETS All\n").getBytes());
-                        message = bufferedReader.readLine();
-                        System.out.println("The server is saying: "+message);
-                        dataOut.write(("OK\n").getBytes());
-                        jobID++;
-                        
-                        
-                    }
-               }
-               
-                    
-                    
+            }
 
+        }
 
-                   // message = bufferedReader.readLine();
-                    //System.out.println("The server is saying:"+message);
-                   // dataOut.flush();
-               
-               
-               
-               
-               
         dataOut.close();
-        //datain.close();
         bufferedReader.close();
         clientSocket.close();
-    }
-    catch(Exception e){System.out.println(e);}
-    }}
 
+    }
+
+    private Server largestServer() {
+        int largestindex = 0;
+        int maxCores = 0;
+        for (int i = 0; i < servers.size(); i++) {
+            if (servers.get(i).getCores() > maxCores) {
+                maxCores = server.get(i).getCores();
+                largestindex = i;
+            }
+        }
+        return servers.get(largestindex);
+    }
+
+}
