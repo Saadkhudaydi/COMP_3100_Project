@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.Socket;
+import java.util.Scanner;
 
 public class Client {
     public static void main(String[] args) throws Exception {
@@ -29,7 +30,7 @@ public class Client {
 
            // }
             
-                
+           String command = "";
 
        // }
               try{  
@@ -48,12 +49,51 @@ public class Client {
                dataOut.write(("REDY\n").getBytes());
                dataOut.flush();
                message = bufferedReader.readLine();
-               System.out.println("The server is saying:"+message);
-               dataOut.write(("QUIT\n").getBytes());
-               dataOut.flush();
-               message = bufferedReader.readLine();
-               System.out.println("The server is saying:"+message);
+               System.out.println("The server is saying: "+message);
+               int jobID = 0;
 
+              
+
+               dataOut.write(("GETS All\n").getBytes());
+               message = bufferedReader.readLine();
+               System.out.println("The server is saying: "+message);
+               dataOut.write(("OK\n").getBytes());
+               message = bufferedReader.readLine();
+               System.out.println("The server is saying: "+message);
+
+               while(jobID==500){
+                    dataOut.write(("OK\n").getBytes());
+                    message = bufferedReader.readLine();
+                    System.out.println("The server is saying: "+message);
+                    if (message.equals("."))
+                    {
+                        int Server = 0;
+                        
+                        dataOut.write(("SCHD " + jobID + "medium " + Server).getBytes());
+                        message = bufferedReader.readLine();
+                        System.out.println("The server is saying: "+message);
+                        dataOut.write(("GETS All\n").getBytes());
+                        message = bufferedReader.readLine();
+                        System.out.println("The server is saying: "+message);
+                        dataOut.write(("OK\n").getBytes());
+                        jobID++;
+                        
+                        
+                    }
+               }
+               
+                    
+                    
+
+
+                   // message = bufferedReader.readLine();
+                    //System.out.println("The server is saying:"+message);
+                   // dataOut.flush();
+               
+               
+               
+               
+               
         dataOut.close();
         //datain.close();
         bufferedReader.close();
