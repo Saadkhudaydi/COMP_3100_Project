@@ -1,103 +1,57 @@
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
-
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.sound.sampled.Line;
+
+// JOBN submitTime jobID estRuntime core memory disk
 public class Client {
 
-    class Server { // class to store and retrive server info
-        private String type;
-        private int cores;
-        private int id;
-        private int limit;
-        private double hourlyRate;
-        private int memory;
-        private int diskSpace;
-
-        public Server(String type, int id, int limit, double hourlyRate, int cores, int memory, int diskSpace) {
-            this.type = type;
-            this.cores = cores;
-            this.id = id;
-            this.limit = limit;
-            this.hourlyRate = hourlyRate;
-            this.cores = cores;
-            this.memory = memory;
-            this.diskSpace = diskSpace;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public int getCores() {
-            return cores;
-        }
-
-        public int getId() {
-            return id;
-        }
-
-        public int getLimit() {
-            return limit;
-        }
-
-        public int getMemory() {
-            return memory;
-        }
-
-        public double getHourlyRate() {
-            return hourlyRate;
-        }
-
-        public int getDiskSpace() {
-            return diskSpace;
-        }
-    }
+    private static final String HELO = "HELO\n"; // declearing static Variables
+    private static final String AUTH = "AUTH 47478969\n";
+    private static final String REDY = "REDY\n";
+    private static final String SCHD = "SCHD\n";
+    private static final String OK = "OK\n";
+    private static final String SERVER_IP = "127.0.0.1";
+    private static final int SERVER_PORT = 50000;
 
     public static void main(String[] args) throws Exception {
+        Socket clientSocket = new Socket(SERVER_IP, SERVER_PORT); // creating the socket
+        DataOutputStream dataOut = new DataOutputStream(clientSocket.getOutputStream());
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-        String HELO = "HELO\n";
-        String AUTH = "AUTH 47478969\n";
-        String REDY = "REDY\n";
-        String SCHD = "SCHD\n";
-        Socket clientSocket = new Socket("127.0.0.1", 50000); // creating the socket
         String message = "";
-        DataOutputStream dataOut = new DataOutputStream(clientSocket.getOutputStream()); // dataout for writing to the
-                                                                                         // server
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); // bufferreader
-                                                                                                                  // to
-                                                                                                                  // read
-                                                                                                                  // from
-                                                                                                                  // theserver
-        Server largestServer;
-        ArrayList<Server> servers = new ArrayList<Server>();
-        dataOut.write(HELO.getBytes()); // Handshake begins
-        dataOut.flush();
-        message = bufferedReader.readLine();
-        System.out.println("The server is saying:" + message);
-        dataOut.write(AUTH.getBytes());
-        dataOut.flush();
-        message = bufferedReader.readLine();
-        System.out.println("The server is saying:" + message); // Handshake ends
+
+        sendMessage(HELO, dataOut);  // Handshake begins
+        message = receiveMessage(bufferedReader);
+        
+        sendMessage(AUTH, dataOut);
+        message = receiveMessage(bufferedReader); // Handshake ends
 
         while (!message.equals("NONE")) {
-            dataOut.write(REDY.getBytes()); // Alerting the server that client is REDY
-            dataOut.flush();
-            message = bufferedReader.readLine();
-            System.out.println("The server is saying: " + message);
-            if (message.equals("JOBN")) {
-                dataOut.write(("GETS All\n").getBytes());
-                dataOut.flush();
-                message = bufferedReader.readLine();
-                System.out.println("The server is saying: " + message);
-                dataOut.write(("OK").getBytes());
-                dataOut.flush();
-                servers.add(bufferedReader.readLine()); // adding all servers to a list
+            
+            sendMessage(REDY, dataOut); // Alerting the server that client is REDY
+            message = receiveMessage(bufferedReader);
 
-                dataOut.write(("OK").getBytes());
+            if (message.contains("JOBN")) {
+                String[] jobnInfo = message.split(" ");
+                dataOut.write(
+                        ("GETS Capable " + jobnInfo[4] + " " + jobnInfo[5] + " " + jobnInfo[6] + "\n").getBytes());
+                        sendMessage("GETS Capable " + jobnInfo[4] + " " + jobnInfo[5] + " " + jobnInfo[6] + "\n", dataOut);
+                        sendMessage("GETS All\n", dataOut);
+
+                message = receiveMessage(bufferedReader);
+                
+                dataOut.write(OK.getBytes());
+                System.out.println(bufferedReader.readLine());
+                servers.addAll(getServers(bufferedReader));
+
+                dataOut.write(OK.getBytes());
                 message = bufferedReader.readLine();
                 if (message.equals(".")) {
 
@@ -113,16 +67,38 @@ public class Client {
 
     }
 
-    private Server largestServer() {
-        int largestindex = 0;
-        int maxCores = 0;
-        for (int i = 0; i < servers.size(); i++) {
-            if (servers.get(i).getCores() > maxCores) {
-                maxCores = server.get(i).getCores();
-                largestindex = i;
-            }
+    private static void sendMessage(String message, DataOutputStream dataOut) {
+        System.out.println("Sending Message: " + message);
+        try {
+            dataOut.write(message.getBytes());
+        } catch (IOException e) {
+            System.out.println("Exception occured when sending message" + e.getMessage());
         }
-        return servers.get(largestindex);
     }
+
+    private static String receiveMessage(BufferedReader bufferedReader) {
+        try {
+            String message = bufferedReader.readLine();
+            System.out.println("Recieved Message: "+message);
+            return message;
+        } catch (IOException e) {
+            System.out.println("Exception occured when receiving message" + e.getMessage());
+        }
+        return "";
+    }
+
+    private static List<ServerInfo> getServers(BufferedReader buffer) throws IOException {
+        List<ServerInfo> servers = new ArrayList<>();
+        String line = buffer.readLine();
+        while (line != null) {
+            servers.add(new ServerInfo(line.split(" "))); // add the servers info by splitting the spaces from the
+                                                          // server's response
+            line = buffer.readLine();
+        }
+        return servers;
+
+    }
+
+    private static String[] 
 
 }
