@@ -11,6 +11,7 @@ public class Schedule {
     private static Map<String, Integer> scheduledServersMap = new HashMap<>();
     private Job job;
     private ServerInfo server;
+    private static int lastServerId;
 
     public Schedule(Job job, List<ServerInfo> servers) {
         this.job = job;
@@ -19,8 +20,9 @@ public class Schedule {
 
     private int getLRR(List<ServerInfo> servers) {
         String serverType = servers.get(0).getType();
-        int lastServerId = Schedule.scheduledServersMap.get(serverType);
         Schedule.scheduledServersMap.put(serverType, lastServerId + 1);
+        lastServerId = Schedule.scheduledServersMap.get(serverType);
+
         return (lastServerId + 1) % servers.size();
     }
 

@@ -15,6 +15,8 @@ public class Client {
     private static final String AUTH = "AUTH 47478969\n";
     private static final String REDY = "REDY\n";
     private static final String SCHD = "SCHD ";
+    private static final String NONE = "NONE\n";
+    private static final String QUIT = "QUIT\n";
     private static final String GETS_CAPABLE = "GETS Capable ";
     private static final String GETS_ALL = "GETS All\n";
     private static final String GETS_AVAIL = "GETS Avail ";
@@ -42,7 +44,14 @@ public class Client {
             response = sendMessage(REDY); // Alerting the server that client is REDY
             if (response.contains("JOBN")) {
                 jobnHandler(response, servers);
+
             } else if (response.contains("JCPL")) {
+                sendMessage(REDY);
+            } else if (response.equals("NONE")) {
+                sendMessage(QUIT);
+                response = NONE;
+            } else {
+                break;
             }
         }
     }
@@ -73,10 +82,14 @@ public class Client {
 
     private static void jobnHandler(String response, Map<String, List<ServerInfo>> servers) {
         Job job = new Job(response.split(" "));
-        response = sendMessage(GETS_AVAIL + job.getRequiredResources());
+        response = sendMessage(GETS_CAPABLE + job.getRequiredResources());
         int numOfServers = Integer.parseInt(response.split(" ")[1]); // Store Num of servers
         if (numOfServers == 0) {
             System.out.println("No available servers");
+            sendMessage(OK);
+            sendMessage(NONE);
+            sendMessage(QUIT);
+            response = NONE;
             return;
         }
         response = sendMessage(OK);
