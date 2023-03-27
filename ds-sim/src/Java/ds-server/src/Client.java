@@ -41,15 +41,22 @@ public class Client {
         Map<String, List<ServerInfo>> servers = new HashMap();
         String response = sendMessage(HELO); // Handshake begins
         sendMessage(AUTH); // Handshake ends
-        while (!response.isBlank()) {
+        while (!response.equals("NONE") && !response.isEmpty()) {
             response = sendMessage(REDY); // Alerting the server that client is REDY
-            if (response.contains("NONE")) {
-                sendMessage(QUIT);
-                break;
-            }
-
-            else if (response.contains("JOBN")) {
+            if (response.contains("JOBN")) {
                 jobnHandler(response, servers);
+
+            } else if (response.contains("JCPL")) {
+                response = sendMessage(REDY);
+                if (response.equals("NONE")) {
+                    sendMessage(QUIT);
+                    break;
+                }
+            } else if (response.equals("NONE")) {
+                response = sendMessage(QUIT);
+                break;
+            } else {
+                break;
             }
         }
     }
