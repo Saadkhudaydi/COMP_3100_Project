@@ -33,25 +33,23 @@ public class Client {
     public static void main(String[] args) throws Exception {
         initConnection();
         startProcessing();
-        closeConnection();
+        socket.setSoTimeout(100000);
+        // closeConnection();
     }
 
     private static void startProcessing() {
         Map<String, List<ServerInfo>> servers = new HashMap();
         String response = sendMessage(HELO); // Handshake begins
         sendMessage(AUTH); // Handshake ends
-        while (!response.equals("NONE") && !response.isEmpty()) {
+        while (!response.isBlank()) {
             response = sendMessage(REDY); // Alerting the server that client is REDY
-            if (response.contains("JOBN")) {
-                jobnHandler(response, servers);
-
-            } else if (response.contains("JCPL")) {
-                sendMessage(REDY);
-            } else if (response.equals("NONE")) {
+            if (response.contains("NONE")) {
                 sendMessage(QUIT);
-                response = NONE;
-            } else {
                 break;
+            }
+
+            else if (response.contains("JOBN")) {
+                jobnHandler(response, servers);
             }
         }
     }
@@ -82,14 +80,34 @@ public class Client {
 
     private static void jobnHandler(String response, Map<String, List<ServerInfo>> servers) {
         Job job = new Job(response.split(" "));
-        response = sendMessage(GETS_CAPABLE + job.getRequiredResources());
+        int changeCommand;
+        response = sendMessage(GETS_AVAIL + job.getRequiredResources());
         int numOfServers = Integer.parseInt(response.split(" ")[1]); // Store Num of servers
         if (numOfServers == 0) {
             System.out.println("No available servers");
             sendMessage(OK);
-            sendMessage(NONE);
-            sendMessage(QUIT);
-            response = NONE;
+            changeCommand = Integer.parseInt(response.split(" ")[1]);
+            if (changeCommand == 0) {
+                response = sendMessage(GETS_CAPABLE + job.getRequiredResources());
+                numOfServers = Integer.parseInt(response.split(" ")[1]);
+                response = sendMessage(OK);
+                try {
+                    servers = getServers(response, numOfServers);
+                } catch (IOException ioException) {
+                    System.out.println("IO exception detected " + ioException.getMessage());
+                    return;
+                }
+                response = sendMessage(OK);
+                if (response.equals(".")) {
+                    Schedule schedule = new Schedule(job, servers.get(LARGEST_TYPE));
+                    response = sendMessage(schedule.scheduleJob(SCHD));
+                }
+            } else {
+                sendMessage(NONE);
+                sendMessage(QUIT);
+                response = NONE;
+            }
+
             return;
         }
         response = sendMessage(OK);
@@ -107,14 +125,18 @@ public class Client {
     }
 
     private static String sendMessage(String message) {
+
         System.out.print("Sending Message: " + message);
+
         try {
             dataOut.write(message.getBytes());
             String response = bufferedReader.readLine();
             System.out.println("Recieved Message: " + response);
+
             return response;
+
         } catch (IOException e) {
-            System.out.println("Exception occured when sending message" + e.getMessage());
+            System.out.println("Exception occured when sending message " + e.getMessage());
         }
         return "";
     }

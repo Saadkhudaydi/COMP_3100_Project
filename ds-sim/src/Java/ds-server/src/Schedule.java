@@ -15,12 +15,12 @@ public class Schedule {
 
     public Schedule(Job job, List<ServerInfo> servers) {
         this.job = job;
-        this.server = servers.get(getLRR(servers));
+        this.server = servers.get(getFirstServer(servers));
     }
 
     private int getLRR(List<ServerInfo> servers) {
         String serverType = servers.get(0).getType();
-        Schedule.scheduledServersMap.put(serverType, lastServerId + 1);
+        Schedule.scheduledServersMap.put(serverType, lastServerId);
         lastServerId = Schedule.scheduledServersMap.get(serverType);
 
         return (lastServerId + 1) % servers.size();
