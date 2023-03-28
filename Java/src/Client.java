@@ -34,7 +34,7 @@ public class Client {
         initConnection();
         startProcessing();
         socket.setSoTimeout(100000);
-        // closeConnection();
+        closeConnection();
     }
 
     private static void startProcessing() {
