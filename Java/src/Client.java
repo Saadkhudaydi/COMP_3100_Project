@@ -12,7 +12,7 @@ import java.util.Map;
 public class Client {
 
     private static final String HELO = "HELO\n"; // declearing static Variables
-    private static final String AUTH = "AUTH 47478969\n";
+    private static final String AUTH = "AUTH saad\n";
     private static final String REDY = "REDY\n";
     private static final String SCHD = "SCHD ";
     private static final String NONE = "NONE\n";
@@ -80,35 +80,13 @@ public class Client {
 
     private static void jobnHandler(String response, Map<String, List<ServerInfo>> servers) {
         Job job = new Job(response.split(" "));
-        int changeCommand;
-        response = sendMessage(GETS_AVAIL + job.getRequiredResources());
+        response = sendMessage(GETS_CAPABLE + job.getRequiredResources());
         int numOfServers = Integer.parseInt(response.split(" ")[1]); // Store Num of servers
         if (numOfServers == 0) {
             System.out.println("No available servers");
             sendMessage(OK);
-            changeCommand = Integer.parseInt(response.split(" ")[1]);
-            if (changeCommand == 0) {
-                response = sendMessage(GETS_CAPABLE + job.getRequiredResources());
-                numOfServers = Integer.parseInt(response.split(" ")[1]);
-                response = sendMessage(OK);
-                try {
-                    servers = getServers(response, numOfServers);
-                } catch (IOException ioException) {
-                    System.out.println("IO exception detected " + ioException.getMessage());
-                    return;
-                }
-                response = sendMessage(OK);
-                if (response.equals(".")) {
-                    Schedule schedule = new Schedule(job, servers.get(LARGEST_TYPE));
-                    response = sendMessage(schedule.scheduleJob(SCHD));
-                }
-            } else {
-                sendMessage(NONE);
-                sendMessage(QUIT);
-                response = NONE;
-            }
-
-            return;
+            sendMessage(NONE);
+            sendMessage(QUIT);
         }
         response = sendMessage(OK);
         try {
@@ -167,9 +145,10 @@ public class Client {
             serversMap.put(serverInfo.getType(), servers); // assigning keys to the lists
 
         }
-        LARGEST_CORES = largestCore; // assigning the static varibales to be used in scheduling
-        LARGEST_TYPE = largestType;
-
+        if (LARGEST_CORES < largestCore) { // putting a condition in order to keep the ServerType the same
+            LARGEST_CORES = largestCore; // assigning the static varibales to be used in scheduling
+            LARGEST_TYPE = largestType;
+        }
         return serversMap;
     }
 

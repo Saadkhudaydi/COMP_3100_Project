@@ -1,5 +1,5 @@
-import java.util.HashMap;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -8,35 +8,28 @@ import java.util.Map;
  */
 
 public class Schedule {
-    private static Map<String, Integer> scheduledServersMap = new HashMap<>();
+    private static Map<String, Integer> scheduledServersMap = new HashMap<>(); // creating hashmap for the largest
+                                                                               // server type
     private Job job;
     private ServerInfo server;
     private static int lastServerId;
+    private static int i;
 
     public Schedule(Job job, List<ServerInfo> servers) {
         this.job = job;
-        this.server = servers.get(getFirstServer(servers));
+        this.server = servers.get(getLRR(servers));
     }
 
     private int getLRR(List<ServerInfo> servers) {
-        String serverType = servers.get(0).getType();
-        Schedule.scheduledServersMap.put(serverType, lastServerId);
-        lastServerId = Schedule.scheduledServersMap.get(serverType);
-
-        return (lastServerId + 1) % servers.size();
-    }
-
-    private int getFirstServer(List<ServerInfo> servers) {
-        int smallestIndex = 0;
-        int largestId = 100;
-        for (int i = 0; i < servers.size(); i++) {
-            int serverId = servers.get(i).getId();
-            if (largestId > serverId) {
-                largestId = serverId;
-                smallestIndex = i;
-            }
+        int NumOfLargestServers = servers.size();
+        for (i = 0; i < NumOfLargestServers; i++) {
+            String serverType = servers.get(i).getType();
+            Schedule.scheduledServersMap.put(serverType, lastServerId);
+            lastServerId = Schedule.scheduledServersMap.get(serverType);
+            break;
         }
-        return smallestIndex;
+        return (lastServerId++) % servers.size(); // adding a mod to not surpass the server size
+
     }
 
     public String scheduleJob(String SCHD) {
