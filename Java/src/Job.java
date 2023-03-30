@@ -1,4 +1,4 @@
-// JOBN submitTime id estimateRunTime core memory disk
+// JOB INFORMATION:type submitTime id estimateRunTime core memory disk
 public class Job {
     private String type;
     private int submitTime;

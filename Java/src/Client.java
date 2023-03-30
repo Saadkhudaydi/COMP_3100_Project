@@ -18,22 +18,20 @@ public class Client {
     private static final String NONE = "NONE\n";
     private static final String QUIT = "QUIT\n";
     private static final String GETS_CAPABLE = "GETS Capable ";
-    private static final String GETS_ALL = "GETS All\n";
-    private static final String GETS_AVAIL = "GETS Avail ";
     private static final String OK = "OK\n";
     private static final String SERVER_IP = "127.0.0.1";
     private static final int SERVER_PORT = 50000;
     private static String LARGEST_TYPE;
     private static int LARGEST_CORES;
     private static Socket socket; // creating the socket
-    private static DataOutputStream dataOut;
-    private static InputStreamReader dataIn;
-    private static BufferedReader bufferedReader;
+    private static DataOutputStream dataOut; // for outputing to the server
+    private static InputStreamReader dataIn; // to receive messages from server
+    private static BufferedReader bufferedReader; // to receive messages from server
 
     public static void main(String[] args) throws Exception {
         initConnection();
         startProcessing();
-        socket.setSoTimeout(100000);
+        socket.setSoTimeout(1000);
         closeConnection();
     }
 
@@ -87,8 +85,9 @@ public class Client {
             sendMessage(OK);
             sendMessage(NONE);
             sendMessage(QUIT);
+        } else {
+            response = sendMessage(OK);
         }
-        response = sendMessage(OK);
         try {
             servers = getServers(response, numOfServers);
         } catch (IOException ioException) {
@@ -121,8 +120,8 @@ public class Client {
 
     private static Map<String, List<ServerInfo>> getServers(String firstServer, int numOfServers) throws IOException {
         Map<String, List<ServerInfo>> serversMap = new HashMap(); // Hashtable with the keys being the server type
-        int largestCore = 0;
-        String largestType = "";
+        int currentLargestCore = 0;
+        String currentLargestType = "";
         String line = firstServer;
         for (int i = 0; i < numOfServers; i++) { // looping through the servers
 
@@ -132,9 +131,9 @@ public class Client {
 
             ServerInfo serverInfo = new ServerInfo(line.split(" "));
             // add the servers info by splitting the spaces from the server's response
-            if (largestCore < serverInfo.getCore()) { // searching for largest core
-                largestCore = serverInfo.getCore();
-                largestType = serverInfo.getType();
+            if (currentLargestCore < serverInfo.getCore()) { // searching for largest core
+                currentLargestCore = serverInfo.getCore(); // fillter the largest servers
+                currentLargestType = serverInfo.getType();
             }
             List<ServerInfo> servers = serversMap.get(serverInfo.getType());
             // GET ALL SERVERS THAT BELONG TO THE SAME TYPE OF THE OBJECT
@@ -142,12 +141,15 @@ public class Client {
                 servers = new ArrayList<>();
             }
             servers.add(serverInfo); // add the servers to the list
-            serversMap.put(serverInfo.getType(), servers); // assigning keys to the lists
+            serversMap.put(serverInfo.getType(), servers); // assigning keys to the lists and storing each server
+                                                           // arraylist
 
         }
-        if (LARGEST_CORES < largestCore) { // putting a condition in order to keep the ServerType the same
-            LARGEST_CORES = largestCore; // assigning the static varibales to be used in scheduling
-            LARGEST_TYPE = largestType;
+        if (LARGEST_CORES < currentLargestCore) {
+            // putting a condition in order to keep the first largest server if both have
+            // the same core count
+            LARGEST_CORES = currentLargestCore; // assigning the static varibales to be used in scheduling
+            LARGEST_TYPE = currentLargestType;
         }
         return serversMap;
     }

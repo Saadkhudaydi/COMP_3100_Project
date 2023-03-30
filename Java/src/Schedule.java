@@ -4,7 +4,7 @@ import java.util.Map;
 
 /**
  * Schedule
- * SCHD jobID serverType serverID
+ * REQUIRMENTS FOR SCHEDULING: SCHD jobID serverType serverID
  */
 
 public class Schedule {
@@ -13,7 +13,6 @@ public class Schedule {
     private Job job;
     private ServerInfo server;
     private static int lastServerId;
-    private static int i;
 
     public Schedule(Job job, List<ServerInfo> servers) {
         this.job = job;
@@ -21,13 +20,9 @@ public class Schedule {
     }
 
     private int getLRR(List<ServerInfo> servers) {
-        int NumOfLargestServers = servers.size();
-        for (i = 0; i < NumOfLargestServers; i++) {
-            String serverType = servers.get(i).getType();
-            Schedule.scheduledServersMap.put(serverType, lastServerId);
-            lastServerId = Schedule.scheduledServersMap.get(serverType);
-            break;
-        }
+        String serverType = servers.get(0).getType();
+        Schedule.scheduledServersMap.put(serverType, lastServerId);
+        lastServerId = Schedule.scheduledServersMap.get(serverType);
         return (lastServerId++) % servers.size(); // adding a mod to not surpass the server size
 
     }

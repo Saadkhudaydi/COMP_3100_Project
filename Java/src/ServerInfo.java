@@ -1,6 +1,7 @@
 /**
  * ServerInfo
- * serverType serverID state curStartTime core memory disk #waitingJobs
+ * INFO RECEVIED FROM GETS:serverType serverID state curStartTime core memory
+ * disk #waitingJobs
  * #runningJobs
  */
 
