@@ -103,12 +103,12 @@ public class Client {
 
     private static String sendMessage(String message) {
 
-        System.out.print("Sending Message: " + message);
+       // System.out.print("Sending Message: " + message);
 
         try {
             dataOut.write(message.getBytes());
             String response = bufferedReader.readLine();
-            System.out.println("Recieved Message: " + response);
+            //System.out.println("Recieved Message: " + response);
 
             return response;
 
