@@ -16,7 +16,7 @@ public class Schedule {
 
     public Schedule(Job job, List<ServerInfo> servers) {
         this.job = job;
-        this.server = servers.get(getLRR(servers));
+        this.server = servers.get(getFirstServer(servers));
     }
 
     private int getLRR(List<ServerInfo> servers) {
@@ -25,6 +25,19 @@ public class Schedule {
         lastServerId = Schedule.scheduledServersMap.get(serverType);
         return (lastServerId++) % servers.size(); // adding a mod to not surpass the server size
 
+    }
+
+    private int getFirstServer(List<ServerInfo> servers) {
+        int smallestIndex = 0;
+        int largestId = 100;
+        for (int i = 0; i < servers.size(); i++) {
+            int serverId = servers.get(i).getId();
+            if (largestId > serverId) {
+                largestId = serverId;
+                smallestIndex = i;
+            }
+        }
+        return smallestIndex;
     }
 
     public String scheduleJob(String SCHD) {

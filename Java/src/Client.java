@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -96,19 +97,23 @@ public class Client {
         }
         response = sendMessage(OK);
         if (response.equals(".")) {
-            Schedule schedule = new Schedule(job, servers.get(LARGEST_TYPE));
-            response = sendMessage(schedule.scheduleJob(SCHD));
+            for (String key : servers.keySet()) {
+                // System.out.println(servers.get(key));
+                Schedule schedule = new Schedule(job, servers.get(key));
+                response = sendMessage(schedule.scheduleJob(SCHD));
+            }
+
         }
     }
 
     private static String sendMessage(String message) {
 
-       // System.out.print("Sending Message: " + message);
+        System.out.print("Sending Message: " + message);
 
         try {
             dataOut.write(message.getBytes());
             String response = bufferedReader.readLine();
-            //System.out.println("Recieved Message: " + response);
+            System.out.println("Recieved Message: " + response);
 
             return response;
 
@@ -119,7 +124,7 @@ public class Client {
     }
 
     private static Map<String, List<ServerInfo>> getServers(String firstServer, int numOfServers) throws IOException {
-        Map<String, List<ServerInfo>> serversMap = new HashMap(); // Hashtable with the keys being the server type
+        Map<String, List<ServerInfo>> serversMap = new LinkedHashMap(); // Hashtable with the keys being the server type
         int currentLargestCore = 0;
         String currentLargestType = "";
         String line = firstServer;
@@ -131,7 +136,7 @@ public class Client {
 
             ServerInfo serverInfo = new ServerInfo(line.split(" "));
             // add the servers info by splitting the spaces from the server's response
-            if (currentLargestCore < serverInfo.getCore()) { // searching for largest core
+            if (currentLargestCore <= serverInfo.getCore()) { // searching for largest core
                 currentLargestCore = serverInfo.getCore(); // fillter the largest servers
                 currentLargestType = serverInfo.getType();
             }
@@ -145,7 +150,7 @@ public class Client {
                                                            // arraylist
 
         }
-        if (LARGEST_CORES < currentLargestCore) {
+        if (LARGEST_CORES <= currentLargestCore) {
             // putting a condition in order to keep the first largest server if both have
             // the same core count
             LARGEST_CORES = currentLargestCore; // assigning the static varibales to be used in scheduling
