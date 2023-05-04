@@ -23,6 +23,7 @@ public class Client {
     private static final String SERVER_IP = "127.0.0.1";
     private static final int SERVER_PORT = 50000;
     private static String LARGEST_TYPE;
+    private static String FIRST_SERVER_TYPE;
     private static int LARGEST_CORES;
     private static Socket socket; // creating the socket
     private static DataOutputStream dataOut; // for outputing to the server
@@ -97,11 +98,11 @@ public class Client {
         }
         response = sendMessage(OK);
         if (response.equals(".")) {
-            for (String key : servers.keySet()) {
+            
                 // System.out.println(servers.get(key));
-                Schedule schedule = new Schedule(job, servers.get(key));
+                Schedule schedule = new Schedule(job, servers.get(FIRST_SERVER_TYPE));
                 response = sendMessage(schedule.scheduleJob(SCHD));
-            }
+            
 
         }
     }
@@ -128,6 +129,7 @@ public class Client {
         int currentLargestCore = 0;
         String currentLargestType = "";
         String line = firstServer;
+        FIRST_SERVER_TYPE = firstServer.split(" ")[0];
         for (int i = 0; i < numOfServers; i++) { // looping through the servers
 
             if (i != 0) {
@@ -135,6 +137,7 @@ public class Client {
             }
 
             ServerInfo serverInfo = new ServerInfo(line.split(" "));
+            
             // add the servers info by splitting the spaces from the server's response
             if (currentLargestCore <= serverInfo.getCore()) { // searching for largest core
                 currentLargestCore = serverInfo.getCore(); // fillter the largest servers
@@ -145,7 +148,8 @@ public class Client {
             if (servers == null) {
                 servers = new ArrayList<>();
             }
-            servers.add(serverInfo); // add the servers to the list
+            servers.add(serverInfo);
+            // add the servers to the list
             serversMap.put(serverInfo.getType(), servers); // assigning keys to the lists and storing each server
                                                            // arraylist
 
@@ -156,6 +160,7 @@ public class Client {
             LARGEST_CORES = currentLargestCore; // assigning the static varibales to be used in scheduling
             LARGEST_TYPE = currentLargestType;
         }
+        
         return serversMap;
     }
 

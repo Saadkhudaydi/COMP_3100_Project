@@ -1,5 +1,6 @@
 import java.util.List;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -8,7 +9,7 @@ import java.util.Map;
  */
 
 public class Schedule {
-    private static Map<String, Integer> scheduledServersMap = new HashMap<>(); // creating hashmap for the largest
+    private static Map<String, Integer> scheduledServersMap = new LinkedHashMap<>(); // creating hashmap for the largest
                                                                                // server type
     private Job job;
     private ServerInfo server;
