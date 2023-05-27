@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class Schedule {
     private static Map<String, Integer> scheduledServersMap = new LinkedHashMap<>(); // creating hashmap for the largest
-                                                                               // server type
+    // server type
     private Job job;
     private ServerInfo server;
     private static int lastServerId;

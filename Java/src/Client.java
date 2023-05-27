@@ -19,6 +19,7 @@ public class Client {
     private static final String NONE = "NONE\n";
     private static final String QUIT = "QUIT\n";
     private static final String GETS_CAPABLE = "GETS Capable ";
+    private static final String GETS_AVAIL = "GETS Avail ";
     private static final String OK = "OK\n";
     private static final String SERVER_IP = "127.0.0.1";
     private static final int SERVER_PORT = 50000;
@@ -80,30 +81,52 @@ public class Client {
 
     private static void jobnHandler(String response, Map<String, List<ServerInfo>> servers) {
         Job job = new Job(response.split(" "));
-        response = sendMessage(GETS_CAPABLE + job.getRequiredResources());
+        int changeCommand;
+        response = sendMessage(GETS_AVAIL + job.getRequiredResources());
         int numOfServers = Integer.parseInt(response.split(" ")[1]); // Store Num of servers
+
         if (numOfServers == 0) {
             System.out.println("No available servers");
             sendMessage(OK);
-            sendMessage(NONE);
-            sendMessage(QUIT);
+            changeCommand = Integer.parseInt(response.split(" ")[1]);
+            if (changeCommand == 0) {
+                response = sendMessage(GETS_CAPABLE + job.getRequiredResources());
+                numOfServers = Integer.parseInt(response.split(" ")[1]);
+                response = sendMessage(OK);
+
+                try {
+                    servers = getServers(response, numOfServers);
+                } catch (IOException ioException) {
+                    System.out.println("IO exception detected " + ioException.getMessage());
+                    return;
+                }
+                response = sendMessage(OK);
+                if (response.equals(".")) {
+
+                    // System.out.println(servers.get(key));
+                    Schedule schedule = new Schedule(job, servers.get(FIRST_SERVER_TYPE));
+                    response = sendMessage(schedule.scheduleJob(SCHD));
+
+                }
+            }
+
         } else {
             response = sendMessage(OK);
-        }
-        try {
-            servers = getServers(response, numOfServers);
-        } catch (IOException ioException) {
-            System.out.println("IO exception detected " + ioException.getMessage());
-            return;
-        }
-        response = sendMessage(OK);
-        if (response.equals(".")) {
-            
+            try {
+                servers = getServers(response, numOfServers);
+            } catch (IOException ioException) {
+                System.out.println("IO exception detected " + ioException.getMessage());
+                return;
+            }
+
+            response = sendMessage(OK);
+            if (response.equals(".")) {
+
                 // System.out.println(servers.get(key));
                 Schedule schedule = new Schedule(job, servers.get(FIRST_SERVER_TYPE));
                 response = sendMessage(schedule.scheduleJob(SCHD));
-            
 
+            }
         }
     }
 
@@ -137,7 +160,7 @@ public class Client {
             }
 
             ServerInfo serverInfo = new ServerInfo(line.split(" "));
-            
+
             // add the servers info by splitting the spaces from the server's response
             if (currentLargestCore <= serverInfo.getCore()) { // searching for largest core
                 currentLargestCore = serverInfo.getCore(); // fillter the largest servers
@@ -160,7 +183,7 @@ public class Client {
             LARGEST_CORES = currentLargestCore; // assigning the static varibales to be used in scheduling
             LARGEST_TYPE = currentLargestType;
         }
-        
+
         return serversMap;
     }
 
