@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.Key;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class Client {
 
@@ -23,6 +25,7 @@ public class Client {
     private static final String OK = "OK\n";
     private static final String SERVER_IP = "127.0.0.1";
     private static final int SERVER_PORT = 50000;
+    private static List<List<ServerInfo>> CURRENT_SERVER_LIST = new ArrayList();
     private static String LARGEST_TYPE;
     private static String FIRST_SERVER_TYPE;
     private static int LARGEST_CORES;
@@ -102,10 +105,26 @@ public class Client {
                 }
                 response = sendMessage(OK);
                 if (response.equals(".")) {
+                    Set<String> keys = servers.keySet();
+
+                    for (String key : keys) {
+
+                        for (int i = 0; i < servers.get(key).size(); i++) {
+                            if (servers.get(key).get(i).getCore() <= job.getRequiredNumOfCores()
+                                    || job.getRequiredNumOfCores() < LARGEST_CORES) {
+                                Schedule schedule = new Schedule(job, servers.get(key));
+                                sendMessage(schedule.scheduleJob(SCHD));
+                                return;
+                            }
+                        }
+
+                    }
+
+                    // servers.get(key).get(0).getState();
 
                     // System.out.println(servers.get(key));
-                    Schedule schedule = new Schedule(job, servers.get(FIRST_SERVER_TYPE));
-                    response = sendMessage(schedule.scheduleJob(SCHD));
+                    // Schedule schedule = new Schedule(job, servers.get(FIRST_SERVER_TYPE));
+                    // response = sendMessage(schedule.scheduleJob(SCHD));
 
                 }
             }
@@ -121,10 +140,30 @@ public class Client {
 
             response = sendMessage(OK);
             if (response.equals(".")) {
+                Set<String> keys = servers.keySet();
+
+                for (String key : keys) {
+
+                    for (int i = 0; i < servers.get(key).size(); i++) {
+                        int currentServerCores = servers.get(key).get(i).getCore();
+                        int currentJobCores = job.getRequiredNumOfCores();
+                        int currentServerMemory = servers.get(key).get(i).getMemory();
+                        int currentJobRequierdMemory = job.getRequiredMemorySpace();
+                        if (currentServerCores >= currentJobCores) {
+                            Schedule schedule = new Schedule(job, servers.get(key));
+                            sendMessage(schedule.scheduleJob(SCHD));
+                            return;
+                        }
+                    }
+
+                }
+
+                // Schedule schedule = new Schedule(job, servers.get(FIRST_SERVER_TYPE));
+                // response = sendMessage(schedule.scheduleJob(SCHD));
 
                 // System.out.println(servers.get(key));
-                Schedule schedule = new Schedule(job, servers.get(FIRST_SERVER_TYPE));
-                response = sendMessage(schedule.scheduleJob(SCHD));
+                // Schedule schedule = new Schedule(job, servers.get(FIRST_SERVER_TYPE));
+                // response = sendMessage(schedule.scheduleJob(SCHD));
 
             }
         }
@@ -160,18 +199,19 @@ public class Client {
             }
 
             ServerInfo serverInfo = new ServerInfo(line.split(" "));
-
-            // add the servers info by splitting the spaces from the server's response
-            if (currentLargestCore <= serverInfo.getCore()) { // searching for largest core
-                currentLargestCore = serverInfo.getCore(); // fillter the largest servers
-                currentLargestType = serverInfo.getType();
-            }
             List<ServerInfo> servers = serversMap.get(serverInfo.getType());
             // GET ALL SERVERS THAT BELONG TO THE SAME TYPE OF THE OBJECT
             if (servers == null) {
                 servers = new ArrayList<>();
             }
-            servers.add(serverInfo);
+
+            // add the servers info by splitting the spaces from the server's response
+            if (currentLargestCore <= serverInfo.getCore()) { // searching for largest core
+                currentLargestCore = serverInfo.getCore(); // fillter the largest servers
+                currentLargestType = serverInfo.getType();
+                servers.add(serverInfo);
+            }
+
             // add the servers to the list
             serversMap.put(serverInfo.getType(), servers); // assigning keys to the lists and storing each server
                                                            // arraylist
